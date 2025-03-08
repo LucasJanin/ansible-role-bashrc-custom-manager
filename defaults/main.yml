@@ -1,0 +1,17 @@
+---
+# defaults file for ansible-role-bashrc-custom-manager
+
+# Source host
+source_host: "localhost"
+
+# Source user
+source_user: "ansible"
+
+# Target user
+target_user: "ansible"
+
+# Main bashrc file name
+bashrc: ".bashrc"
+
+# Custom bashrc file name to be sourced
+bashrc_custom: ".bashrc_custom"

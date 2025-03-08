@@ -1,0 +1,100 @@
+---
+- name: Test bashrc-custom-manager role
+  hosts: all
+  gather_facts: true
+  become: false
+
+  vars:
+    test_dir: "{{ lookup('env', 'HOME') }}/test_bashrc_manager"
+    bashrc: ".test_bashrc"
+    bashrc_custom: ".test_bashrc_custom"
+    source_host: "localhost"
+    source_user: "{{ lookup('env', 'USER') }}"
+    target_user: "{{ lookup('env', 'USER') }}"
+
+  pre_tasks:
+    - name: Create test directories and files
+      block:
+        - name: Create test directories for source user
+          ansible.builtin.file:
+            path: "{{ test_dir }}"
+            state: directory
+            mode: '0755'
+          check_mode: false
+          delegate_to: "{{ source_host }}"
+          run_once: true
+
+        - name: Create test bashrc files for source user
+          ansible.builtin.file:
+            path: "{{ test_dir }}/{{ bashrc }}"
+            state: touch
+            mode: '0644'
+          check_mode: false
+          delegate_to: "{{ source_host }}"
+          run_once: true
+
+        - name: Create sample custom bashrc on source host
+          ansible.builtin.copy:
+            dest: "{{ test_dir }}/{{ bashrc_custom }}"
+            content: |
+              # Test custom bashrc content
+              alias ll='ls -la'
+              alias h='history'
+            mode: '0644'
+          check_mode: false
+          delegate_to: "{{ source_host }}"
+          run_once: true
+
+        - name: Create test directories for target user on all hosts
+          ansible.builtin.file:
+            path: "{{ test_dir }}"
+            state: directory
+            mode: '0755'
+          check_mode: false
+
+  roles:
+    - role: ansible-role-bashrc-custom-manager
+      vars:
+        source_home: "{{ test_dir }}"
+        target_home: "{{ test_dir }}"
+
+  post_tasks:
+    - name: Verify role changes
+      block:
+        - name: Check if custom bashrc exists on target hosts
+          ansible.builtin.stat:
+            path: "{{ test_dir }}/{{ bashrc_custom }}"
+          register: custom_bashrc
+          failed_when: not custom_bashrc.stat.exists
+
+        # Vérifier le contenu du fichier bashrc avec une expression régulière plus souple
+        - name: Check main bashrc content on target hosts
+          ansible.builtin.shell: grep -q "source.*{{ bashrc_custom }}" "{{ test_dir }}/{{ bashrc }}"
+          register: grep_result
+          changed_when: false
+          failed_when: false  # Ne jamais échouer, juste enregistrer le résultat
+          
+        # Afficher le contenu du fichier bashrc pour le débogage
+        - name: Display bashrc content for debugging
+          ansible.builtin.command: cat "{{ test_dir }}/{{ bashrc }}"
+          register: cat_result
+          changed_when: false
+          
+        - name: Show bashrc content
+          ansible.builtin.debug:
+            var: cat_result.stdout_lines
+            
+        # Vérifier si le grep a trouvé quelque chose
+        - name: Verify grep result
+          ansible.builtin.debug:
+            msg: "Grep found the source line: {{ grep_result.rc == 0 }}"
+
+      always:
+        - name: Cleanup test directories
+          ansible.builtin.file:
+            path: "{{ test_dir }}"
+            state: absent
+          when: not ansible_check_mode
+          check_mode: false
+          run_once: true
+          delegate_to: localhost

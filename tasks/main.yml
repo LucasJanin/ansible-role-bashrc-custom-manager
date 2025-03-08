@@ -1,0 +1,99 @@
+---
+# tasks file for ansible-role-bashrc-custom-manager
+
+- name: Get Ansible control host name
+  ansible.builtin.command: hostname
+  register: ansible_hostname
+  delegate_to: localhost
+  run_once: true
+  changed_when: false
+  check_mode: false
+
+# Define home directories based on source_user and target_user
+- name: Set home directory for {{ source_user }}
+  ansible.builtin.set_fact:
+    source_home: "{{ '/home/' + source_user if source_user != 'root' else '/root' }}"
+
+- name: Set home directory for {{ target_user }}
+  ansible.builtin.set_fact:
+    target_home: "{{ '/home/' + target_user if target_user != 'root' else '/root' }}"
+
+- name: Ensure {{ bashrc }} exists with proper permissions for {{ target_user }} user
+  ansible.builtin.file:
+    path: "{{ target_home }}/{{ bashrc }}"
+    state: touch
+    owner: "{{ target_user }}"
+    group: "{{ target_user }}"
+    mode: '0644'
+
+- name: Manage custom bashrc configuration
+  block:
+    # This task runs on the control host to check if a default template needs to be created
+    - name: Check if custom bashrc exists for {{ source_user }} user on {{ source_host }} host
+      ansible.builtin.stat:
+        path: "{{ source_home }}/{{ bashrc_custom }}"
+      register: custom_bashrc_stat
+      delegate_to: "{{ source_host }}"
+      run_once: true
+
+    # This task creates a default template if needed on the source host
+    - name: Create sample custom bashrc for {{ source_user }} user on {{ source_host }} host
+      ansible.builtin.copy:
+        dest: "{{ source_home }}/{{ bashrc_custom }}"
+        content: |
+          # Test custom bashrc content
+          alias ll='ls -la'
+          alias h='history'
+        mode: '0644'
+        owner: "{{ source_user }}"
+        group: "{{ source_user }}"
+      delegate_to: "{{ source_host }}"
+      run_once: true
+      check_mode: false
+      when: not custom_bashrc_stat.stat.exists
+
+    # Fetch the custom bashrc from the source user on the source host
+    - name: Fetch custom bashrc from {{ source_user }} user on {{ source_host }} host
+      ansible.builtin.slurp:
+        src: "{{ source_home }}/{{ bashrc_custom }}"
+      register: custom_bashrc_content
+      delegate_to: "{{ source_host }}"
+      run_once: true
+
+    # Copy the custom bashrc to the target user on all target hosts
+    - name: Copy custom bashrc to {{ target_user }} user on target hosts
+      ansible.builtin.copy:
+        content: "{{ custom_bashrc_content['content'] | b64decode }}"
+        dest: "{{ target_home }}/{{ bashrc_custom }}"
+        owner: "{{ target_user }}"
+        group: "{{ target_user }}"
+        mode: '0644'
+      when: inventory_hostname != source_host or target_user != source_user
+
+    # Configure the main bashrc to source the custom bashrc
+    - name: Add custom bashrc source to {{ bashrc }} for {{ target_user }} user
+      ansible.builtin.blockinfile:
+        path: "{{ target_home }}/{{ bashrc }}"
+        block: |
+          # Source custom bashrc configuration
+          if [ -f "$HOME/{{ bashrc_custom }}" ]; then
+              source "$HOME/{{ bashrc_custom }}"
+          fi
+        marker: "# {mark} MANAGED BY ANSIBLE ROLE: bashrc-custom-manager"
+        state: present
+        create: yes
+      register: update_bashrc
+      when: inventory_hostname != source_host or target_user != source_user
+
+    # Ensure proper formatting in the bashrc file
+    - name: Ensure proper file formatting of {{ bashrc }} 
+      ansible.builtin.replace:
+        path: "{{ target_home }}/{{ bashrc }}"
+        regexp: '([\n])(# BEGIN MANAGED BY ANSIBLE ROLE: bashrc-custom-manager)'
+        replace: '\1\n\2'
+      when: 
+        - update_bashrc.changed
+        - inventory_hostname != source_host or target_user != source_user
+  tags:
+    - configuration
+    - bashrc
