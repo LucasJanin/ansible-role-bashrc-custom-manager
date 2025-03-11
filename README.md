@@ -1,17 +1,23 @@
-Ansible Role: Bashrc Custom Manager
-=========
+# Ansible Role: Bashrc Custom Manager
 
 This Ansible role copies custom bashrc configurations from the Ansible host to multiple other hosts. It creates and maintains a custom bashrc file sourced from the main .bashrc, ensuring consistent shell customizations across your infrastructure.
 
-Requirements
-------------
+## Features
+
+- Copy a custom bashrc to each host
+- Source user can be configured
+- Custom file name can be configured
+
+## Screenshot
+![Bashrc Custom Manager](images/bashrc-custom-manager.png )
+
+## Requirements
 
 - Ansible 2.9 or higher
 - Write access to the target user's home directory
 - Bash as the default shell on target hosts
 
-Role Variables
---------------
+## Role Variables
 
 Available variables are listed below, along with default values (see `defaults/main.yml`):
 
@@ -23,13 +29,12 @@ Available variables are listed below, along with default values (see `defaults/m
 | bashrc | str | Main bashrc file name | ".bashrc" |
 | bashrc_custom | str | Custom bashrc file name | ".bashrc_custom" |
 
-Dependencies
-------------
+## Dependencies
 
 No dependencies on other roles.
 
-Example Playbook
-----------------
+## Example Playbook
+
 
 ```yaml
 - hosts: all
@@ -39,8 +44,8 @@ Example Playbook
         target_user: "root"  # Install custom bashrc for root user
 ```
 
-Testing
--------
+## Testing
+
 
 To test the role:
 
@@ -54,8 +59,7 @@ The test playbook will:
 3. Verify the custom bashrc configuration
 4. Clean up test artifacts
 
-Inventory Example
-----------------
+## Inventory Example
 
 Here's an example inventory file format that works with this role:
 
@@ -70,13 +74,11 @@ ansible_user=devops
 ansible_home=/home/devops
 ```
 
-License
--------
+## License
 
 MIT
 
-Contributing
-------------
+## Contributing
 
 Contributions are welcome! Please feel free to submit a Pull Request.
 
@@ -86,8 +88,7 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 4. Push to the branch (`git push origin feature/amazing-feature`)
 5. Open a Pull Request
 
-Author Information
-------------------
+## Author Information
 
 - Lucas Janin
 - https://lucasjanin.com
