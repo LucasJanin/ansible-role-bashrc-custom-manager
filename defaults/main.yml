@@ -10,6 +10,10 @@ source_user: "ansible"
 # Target user
 target_user: "ansible"
 
+# defaults home directories
+source_home: "{{ '/home/' + source_user if source_user != 'root' else '/root' }}"
+target_home: "{{ '/home/' + target_user if target_user != 'root' else '/root' }}"
+
 # Main bashrc file name
 bashrc: ".bashrc"
 

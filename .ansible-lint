@@ -1,0 +1,8 @@
+---
+# .ansible-lint configuration file for ansible-role-bashrc-custom-manager
+skip_list:
+  - meta
+  - run-once  # Ignore run-once warnings globally
+  - risky-file-permissions
+exclude_paths:
+  - 'tests/ansible-role-bashrc-custom-manager/**'

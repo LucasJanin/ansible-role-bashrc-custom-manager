@@ -2,6 +2,7 @@
 - name: Test bashrc-custom-manager role
   hosts: all
   gather_facts: true
+  strategy: linear
   become: false
 
   vars:
@@ -73,17 +74,17 @@
           register: grep_result
           changed_when: false
           failed_when: false  # Ne jamais échouer, juste enregistrer le résultat
-          
+
         # Afficher le contenu du fichier bashrc pour le débogage
         - name: Display bashrc content for debugging
           ansible.builtin.command: cat "{{ test_dir }}/{{ bashrc }}"
           register: cat_result
           changed_when: false
-          
+
         - name: Show bashrc content
           ansible.builtin.debug:
             var: cat_result.stdout_lines
-            
+
         # Vérifier si le grep a trouvé quelque chose
         - name: Verify grep result
           ansible.builtin.debug:
