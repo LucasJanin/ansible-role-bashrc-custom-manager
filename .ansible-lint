@@ -4,5 +4,6 @@ skip_list:
   - meta
   - run-once  # Ignore run-once warnings globally
   - risky-file-permissions
+  - role-name
 exclude_paths:
   - 'tests/ansible-role-bashrc-custom-manager/**'

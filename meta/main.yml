@@ -6,7 +6,6 @@
 
 galaxy_info:
   role_name: bashrc_custom_manager
-  namespace: lucasjanin
   author: Lucas Janin
   description: Copy custom bashrc to multiple hosts
   company: lucasjanin.com
