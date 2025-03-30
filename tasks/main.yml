@@ -51,16 +51,19 @@
         mode: '0644'
       when: inventory_hostname != source_host or target_user != source_user
 
-    - name: "Add custom bashrc source to {{ bashrc ~ ' for user ' ~ target_user }}"  # noqa: ansible-lint/risky-file-permissions
-      when: inventory_hostname != source_host or target_user != source_user
-      register: update_bashrc
-      ansible.builtin.blockinfile:
-        path: "{{ target_home }}/{{ bashrc }}"
-        block: |
-          # Source custom bashrc configuration
-          if [ -f "$HOME/{{ bashrc_custom }}" ]; then
-              source "$HOME/{{ bashrc_custom }}"
-          fi
-        marker: "# {mark} MANAGED BY ANSIBLE ROLE: bashrc-custom-manager"
-        state: present
-        create: true
+- name: "Add custom bashrc source to {{ bashrc ~ ' for user ' ~ target_user }}"
+  when: inventory_hostname != source_host or target_user != source_user
+  register: update_bashrc
+  ansible.builtin.blockinfile:
+    path: "{{ target_home }}/{{ bashrc }}"
+    block: |
+      # Source custom bashrc configuration
+      if [ -f "$HOME/{{ bashrc_custom }}\" ]; then
+          source "$HOME/{{ bashrc_custom }}"
+      fi
+    marker: "# {mark} MANAGED BY ANSIBLE ROLE: bashrc-custom-manager"
+    state: present
+    create: true
+    mode: '0644'
+    owner: "{{ target_user }}"
+    group: "{{ target_user }}"
