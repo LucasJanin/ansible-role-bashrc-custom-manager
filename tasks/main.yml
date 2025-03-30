@@ -58,7 +58,7 @@
     path: "{{ target_home }}/{{ bashrc }}"
     block: |
       # Source custom bashrc configuration
-      if [ -f "$HOME/{{ bashrc_custom }}\" ]; then
+      if [ -f "$HOME/{{ bashrc_custom }}" ]; then
           source "$HOME/{{ bashrc_custom }}"
       fi
     marker: "# {mark} MANAGED BY ANSIBLE ROLE: bashrc-custom-manager"
